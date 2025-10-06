@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Microservicio MS3 - Contenido y Materiales
+  ms3-contenido:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms3-contenido-materiales
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      # MongoDB (VM externa)
+      MONGODB_HOST: ${MONGODB_HOST:-192.168.1.100}
+      MONGODB_PORT: ${MONGODB_PORT:-27017}
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-contenido_materiales_db}
+      MONGODB_USER: ${MONGODB_USER:-admin}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-password}
+      
+      # Configuración del servicio
+      SERVICE_PORT: 8003
+      SERVICE_HOST: 0.0.0.0
+      
+      # URLs de otros microservicios
+      MS1_CURSOS_URL: ${MS1_CURSOS_URL:-http://192.168.1.101:8001}
+      MS2_ESTUDIANTES_URL: ${MS2_ESTUDIANTES_URL:-http://192.168.1.102:8002}
+      
+      # App
+      APP_NAME: MS3-Contenido-Materiales
+      DEBUG: ${DEBUG:-False}
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  microservices-network:
+    driver: bridge
